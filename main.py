@@ -19,8 +19,29 @@ def get_nanopool_amount(wallet):
     return amount
 
 
-def main():
-    print("Starting...")
+def get_coinmate_amount():
+    """Return amount of BTC from coinmate."""
+
+    def createSignature(clientId, apiKey, privateKey, nonce):
+        message = str(nonce) + str(clientId) + apiKey
+        signature = hmac.new(bytes(privateKey, 'latin-1'), bytes(message, 'latin-1'), digestmod=hashlib.sha256).hexdigest()
+        return signature.upper()
+
+    clientId = settings.api.coinmate.client_id
+    public_key = settings.api.coinmate.public_key
+    private_key = settings.api.coinmate.private_key
+    nonce = int(time.time())
+    signature = createSignature(clientId, public_key, private_key, nonce)
+
+    url = "https://coinmate.io/api/balances"
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    values = urlencode({'clientId': clientId, 'publicKey': public_key, 'nonce': nonce, 'signature': signature})
+    content = requests.post(url, data=values, headers=headers)
+    data = content.json()
+    balance = data['data']['BTC']['balance']
+    return balance
 
     yesterday_date = datetime.now() - timedelta(1)
 
