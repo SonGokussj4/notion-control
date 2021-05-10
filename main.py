@@ -208,6 +208,21 @@ def refresh_tblCurrencyExchangeRates():
         row.CZK = rates.get(row.name, 0)
         row.Date = rates['date']
 
+
+def refresh_tblCryptoToUSD():
+    tbl = client.get_collection_view(settings.tables.tblCryptoToUSD)
+
+    tbl_rows = tbl.collection.get_rows()
+
+    crypto_names = [row.title for row in tbl_rows]
+
+    # Get exchange rates from
+    rates = get_crypto_rates(crypto_names)
+
+    for row in tbl_rows:
+        row.USD = rates[row.title]['USD']
+        row.CZK = rates[row.title]['CZK']
+
     # Get table from Degiro page
     tblDegiro = client.get_collection_view(settings.stocks_site)
 
