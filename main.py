@@ -268,5 +268,30 @@ def refresh_tblCryptoToUSD():
     print(x)
 
 
+def get_czk_exchange_rates():
+    """Get CZK eschange rates from CNB."""
+    url = "https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt"
+    content = requests.get(url)
+    data = content.text
+
+    curdate = data.split("\n")[0].split()[0]
+    curdate_as_date = datetime.strptime(curdate, "%d.%m.%Y")
+
+    rates = {line.split('|')[3]: float(line.split('|')[4].replace(',', '.')) for line in data.split("\n")[3:] if line != ""}
+    rates['date'] = curdate_as_date
+
+    return rates
+
+
+def get_crypto_rates(crypto_names: str):
+    """Get crypto currency USD and CZK rates."""
+    dc = {}
+    for crypto_name in crypto_names:
+        url = f"https://min-api.cryptocompare.com/data/price?fsym={crypto_name}&tsyms=USD,CZK"
+        content = requests.get(url)
+        data = content.json()
+        dc[crypto_name] = data
+
+    return dc
 if __name__ == "__main__":
     main()
