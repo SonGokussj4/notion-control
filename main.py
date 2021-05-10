@@ -223,8 +223,12 @@ def refresh_tblCryptoToUSD():
         row.USD = rates[row.title]['USD']
         row.CZK = rates[row.title]['CZK']
 
+
+def refresh_degiro():
+    """Refresh Degiro table."""
+
     # Get table from Degiro page
-    tblDegiro = client.get_collection_view(settings.stocks_site)
+    notionTable = client.get_collection_view(settings.tables.stocks)
 
     # Pretty table settings
     x = PrettyTable()
@@ -236,26 +240,27 @@ def refresh_tblCryptoToUSD():
     x.align["Date"] = "r"
 
     # Get table data
-    table_rows = tblDegiro.collection.get_rows()
+    table_rows = notionTable.collection.get_rows()
 
     # Get all stock_tickers
-    stock_tickers = ' '.join([item.ticker for item in table_rows])
+    stock_tickers = " ".join([item.ticker for item in table_rows])
     df = yf.download(tickers=stock_tickers, period="2d", group_by="ticker", progress=False)
 
     tickers = yf.Tickers(stock_tickers)
 
-    # Iterate over
+    # Iterate over notion table rows
     for row in table_rows:
 
         # Ignore empty rows if any
         if row.ticker == "":
             continue
 
-        # print(f"Checking ticker: {row.ticker}: {closing_value}")
         ticker = tickers.tickers[row.ticker]
 
-        shortName = ticker.info['shortName']
-        closing_value = round(df[row.ticker]['Close'][yesterday_date.strftime("%Y-%m-%d")], 2)
+        shortName = ticker.info["shortName"]
+        closing_value = round(df[row.ticker]["Close"][yesterday_date.strftime("%Y-%m-%d")], 2)
+
+        print(f"Checking ticker: {row.ticker}: {closing_value}")
 
         # Update table USD, DATE fields with new values
         row.usd = closing_value
@@ -293,5 +298,68 @@ def get_crypto_rates(crypto_names: str):
         dc[crypto_name] = data
 
     return dc
+
+
+def refresh_degiroV2():
+    """Hmm."""
+    from degiro.degiro import degiro
+
+    la = degiro()
+    la.login('degiro/config.json')
+    la.getConfig()
+    pfs = la.getPortfolioSummary()
+    portfolio = la.getPortfolio()
+    total = pfs['equity']
+
+    total = round(total, 0)
+
+    tbl = PrettyTable()
+    tbl.field_names = ["Symbol", "Product", "Size", "Price", "Subtotal", "Allocation"]
+    tbl.align["Symbol"] = "r"
+    tbl.align["Size"] = "r"
+    tbl.align["Value"] = "r"
+    tbl.align["Subtotal"] = "r"
+    tbl.align["Allocation"] = "r"
+
+    allo_sum = 0
+    # Prints a pretty table of your equities and their allocation.
+    # print('{:<20}\tsize\tvalue\tsubtot\t\talloc'.format('Product'))
+    total2 = sum([row['size'] * row['price'] for row in portfolio['PRODUCT'].values()])
+    for row in portfolio['PRODUCT'].values():
+        subtot = row['size'] * row['price']
+        alloc = (subtot / total2) * 100  # Asset allocation (%)
+        allo_sum += round(alloc, 2)
+        # print('{:<20}\t{:5.1f}\t{:6.2f}\t{:7.2f}\t\t{:2.1f}%'.format(row['name'], row['size'], row['price'], subtot, alloc))
+        tbl.add_row([row['symbol'], row['name'], row['size'], row['price'], round(subtot, 1), round(alloc, 2)])
+
+    print(tbl.get_string(sortby="Allocation", reversesort=True))
+    print(table_footer(tbl, "Total", {'Subtotal': int(total), 'Allocation': f"{int(allo_sum)} %"}))
+
+
+def table_footer(tbl, text, dc):
+    res = f"{tbl._vertical_char} {text}{' ' * (tbl._widths[0] - len(text))} {tbl._vertical_char}"
+
+    for idx, item in enumerate(tbl.field_names):
+        if idx == 0:
+            continue
+        if not item in dc.keys():
+            res += f"{' ' * (tbl._widths[idx] + 1)} {tbl._vertical_char}"
+        else:
+            res += f"{' ' * (tbl._widths[idx] - len(str(dc[item])))} {dc[item]} {tbl._vertical_char}"
+
+    res += f"\n{tbl._hrule}"
+    return res
+
+
+def main():
+    print("Starting...")
+
+    refresh_tblCryptoToUSD()
+    refresh_tblCurrencyExchangeRates()
+    # refresh_degiro()  # Not done yet
+    refresh_degiroV2()  # Not done yet
+    refresh_crypto()
+
+
 if __name__ == "__main__":
     main()
