@@ -1,12 +1,79 @@
 #!/usr/bin/env python3
 
+import json
+import requests
 import yfinance as yf
+import time
+import hmac
+import hashlib
+from urllib.parse import urlencode
 
 from datetime import datetime, timedelta
 from notion.collection import NotionDate
 from config import settings
 from notion.client import NotionClient
 from prettytable import PrettyTable
+# from urllib.request import urlopen
+
+client = NotionClient(token_v2=settings.token)
+yesterday_date = datetime.now() - timedelta(1)
+
+
+def refresh_crypto():
+    """Refresh Crypto table."""
+
+    # Get table from Crypto page
+    tbl = client.get_collection_view(settings.tables.crypto)
+
+    # Get table data
+    table_rows = tbl.collection.get_rows()
+    # print(f'table_rows: {table_rows}')
+
+    # Pretty table settings
+    x = PrettyTable()
+    x.field_names = ["Symbol", "Crypto Price", "Amount", "USD", "CZK"]
+    # Column Alignment
+    x.align["Symbol"] = "l"
+    x.align["Crypto Price"] = "r"
+    x.align["Amount"] = "r"
+    x.align["USD"] = "r"
+    x.align["CZK"] = "r"
+
+    bitfinex_data = None
+
+    # Iterate over notion table rows
+    for row in table_rows:
+
+        # Ignore empty rows if any
+        if row.symbol == "":
+            continue
+
+        if "nanopool" in row.exchange.lower():
+            amount = get_nanopool_amount(wallet=settings.wallets.nanopool.eth)
+            print(f"FOUND nanopool: {row.symbol}: {amount}")
+            row.amount = round(amount, 10)
+
+        if "coinmate" in row.exchange.lower():
+            amount = get_coinmate_amount()
+            print(f"FOUND coinmate: {row.symbol}: {amount}")
+            row.amount = amount
+
+        if "bitfinex" in row.exchange.lower():
+            if not bitfinex_data:
+                bitfinex_data = get_bitfinex_data()
+
+            found_value = [val[2] for val in bitfinex_data if val[1] == row.symbol]
+            if not found_value:
+                amount = 0
+            else:
+                amount = found_value[0]
+
+            print(f"FOUND bitfinex: {row.symbol}: {amount}")
+            row.amount = amount
+
+    print(x)
+
+
 def get_nanopool_amount(wallet):
     """Return amount of ETH in nanopool wallet.
 
