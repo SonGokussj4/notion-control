@@ -7,6 +7,16 @@ from notion.collection import NotionDate
 from config import settings
 from notion.client import NotionClient
 from prettytable import PrettyTable
+def get_nanopool_amount(wallet):
+    """Return amount of ETH in nanopool wallet.
+
+    Docs: https://eth.nanopool.org/api
+    """
+    nanopool_url = f"https://api.nanopool.org/v1/eth/balance/{wallet}"
+    content = requests.get(nanopool_url)
+    data = content.json()
+    amount = data['data']
+    return amount
 
 
 def main():
