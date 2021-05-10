@@ -189,6 +189,25 @@ def get_coinbase_data():  # NOT WORKING
     cb_access_timestamp = nonce
 
 
+def refresh_tblCurrencyExchangeRates():
+    """Refresh Currency Exchange Rates table."""
+    tbl = client.get_collection_view(settings.tables.tblCurrencyExchangeRates)
+
+    # Get exchange rates from CNB
+    rates = get_czk_exchange_rates()
+
+    # Get table data
+    table_rows = tbl.collection.get_rows()
+
+    for row in table_rows:
+
+        # Ignore empty rows if any
+        if row.name == "":
+            continue
+
+        row.CZK = rates.get(row.name, 0)
+        row.Date = rates['date']
+
     # Get table from Degiro page
     tblDegiro = client.get_collection_view(settings.stocks_site)
 
