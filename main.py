@@ -43,7 +43,46 @@ def get_coinmate_amount():
     balance = data['data']['BTC']['balance']
     return balance
 
-    yesterday_date = datetime.now() - timedelta(1)
+
+def get_bitfinex_data():
+    """Return list-like data.
+    [
+        ['exchange', 'USD', 64.040459323497, 0, 64.040459323497, 'Exchange 300.0 DOGE for USD @ 0.65',
+            {'reason': 'TRADE',
+             'order_id': 64446937831,
+             'order_id_oppo': 64455870683,
+             'trade_price': '0.65',
+             'trade_amount': '300.0'}
+        ],
+        ['exchange', 'ETH', 0.1, 0, 0.1, 'Exchange 0.00465863 ETH for USD @ 3487.9',
+            {'reason': 'TRADE',
+             'order_id': 64385422483,
+             'order_id_oppo': 64384092659,
+             'trade_price': '3487.9',
+             'trade_amount': '-0.00465863'}
+        ], ...
+    """
+    apiPath = 'v2/auth/r/wallets'
+    url = f"https://api.bitfinex.com/{apiPath}"
+    apiKey = settings.api.bitfinex.api_key
+    apiSecret = settings.api.bitfinex.api_key_secret
+    nonce = str(int(round(time.time() * 1000000)))
+    body = ""
+    signature = f"/api/{apiPath}{nonce}{body}"
+    h = hmac.new(apiSecret.encode('utf8'), signature.encode('utf8'), hashlib.sha384)
+    sig = h.hexdigest()
+
+    headers = {
+        'Content-Type': 'application/json',
+        'bfx-nonce': nonce,
+        'bfx-apiKey': apiKey,
+        'bfx-signature': sig
+    }
+
+    content = requests.post(url, data={}, headers=headers)
+    data = content.json()
+    # print(f'data: {data}')
+    return data
 
     client = NotionClient(token_v2=settings.token)
 
