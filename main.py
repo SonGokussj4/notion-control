@@ -345,7 +345,11 @@ def table_footer(tbl, text, dc):
         if not item in dc.keys():
             res += f"{' ' * (tbl._widths[idx] + 1)} {tbl._vertical_char}"
         else:
-            res += f"{' ' * (tbl._widths[idx] - len(str(dc[item])))} {dc[item]} {tbl._vertical_char}"
+            val = dc[item]
+            if str(val).isnumeric():
+                val = f"{val:,}"
+
+            res += f"{' ' * (tbl._widths[idx] - len(str(val)))} {val} {tbl._vertical_char}"
 
     res += f"\n{tbl._hrule}"
     return res
@@ -354,11 +358,11 @@ def table_footer(tbl, text, dc):
 def main():
     print("Starting...")
 
-    refresh_tblCryptoToUSD()
-    refresh_tblCurrencyExchangeRates()
+    # refresh_tblCryptoToUSD()
+    # refresh_tblCurrencyExchangeRates()
     # refresh_degiro()  # Not done yet
     refresh_degiroV2()  # Not done yet
-    refresh_crypto()
+    # refresh_crypto()
 
 
 if __name__ == "__main__":
