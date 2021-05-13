@@ -339,12 +339,15 @@ def refresh_degiroV2():
         symbol = row['symbol']
         result = round((row['price'] / row['breakEvenPrice']) - 1, 4)
 
-        notionRow = notionTable.collection.get_rows(search=symbol)
+        notionRows = notionTable.collection.get_rows()
+        notionRow = [x for x in notionRows if x.ticker == row['symbol']]
+        print(f'notionRow: {notionRow}')
         time.sleep(0.2)
 
         # Row with symbol found
-        if notionRow.total != 0:
+        if notionRow:
             notionRow = notionRow[0]
+            # notionRow = [x for x in notionRows if x['ticker'] == row['symbol']][0]
             print(f"Update! notionRow.name = {notionRow.name}")
             notionRow.name = row['name']
             notionRow.usd = row['price']
