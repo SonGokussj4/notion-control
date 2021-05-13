@@ -395,7 +395,11 @@ def table_footer(tbl, text, dc):
         if item not in dc.keys():
             res += f"{' ' * (tbl._widths[idx] + 1)} {tbl._vertical_char}"
         else:
-            res += f"{' ' * (tbl._widths[idx] - len(str(dc[item])))} {dc[item]} {tbl._vertical_char}"
+            val = dc[item]
+            if str(val).isnumeric():
+                val = f"{val:,}"
+
+            res += f"{' ' * (tbl._widths[idx] - len(str(val)))} {val} {tbl._vertical_char}"
 
     res += f"\n{tbl._hrule}"
     return res
