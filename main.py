@@ -374,7 +374,7 @@ def refresh_degiroV2():
             result = notionTable.default_query().execute()
 
     print(tbl.get_string(sortby="Allocation", reversesort=True))
-    print(table_footer(tbl, "Total", {'Subtotal': int(total), 'Allocation': f"{int(allo_sum)} %"}))
+    # print(table_footer(tbl, "Total", {'Subtotal': int(total), 'Allocation': f"{int(allo_sum)} %"}))
 
     # # Get table from Degiro page
     # notionTable = client.get_collection_view(settings.tables.stocks)
@@ -409,14 +409,18 @@ def table_footer(tbl, text, dc):
 
 
 def main():
-    print("Starting...")
+    print("Start")
 
-    # refresh_tblCryptoToUSD()
-    # refresh_tblCurrencyExchangeRates()
+    print("Updating table: tblCryptoToUSD")
+    refresh_tblCryptoToUSD()
+    print("Updating table: tblCurrencyExchangeRates")
+    refresh_tblCurrencyExchangeRates()
     # refresh_degiro()  # Not done yet
-    refresh_degiroV2()  # Not done yet
-    # refresh_crypto()
+    # refresh_degiroV2()  # Not done yet
+    print("Updating table: Crypto")
+    refresh_crypto()
 
+    print("Done")
 
 if __name__ == "__main__":
     main()
